@@ -2,7 +2,31 @@
 
 class Oca
 {
-	protected $webservice_url = 'webservice.oca.com.ar';
+	const VERSION				= '0.1';
+	protected $cuit				= '';
+	protected $webservice_url	= 'webservice.oca.com.ar';
+	
+	// =========================================================================
+	
+	function __construct($params = array())
+	{
+		foreach ($params as $param => $value)
+		{
+			$this->{$param} = $value;
+		}
+	}
+	
+	// =========================================================================
+	
+	/**
+	 * Sets the useragent for PHP to use
+	 * 
+	 * @return string
+	 */
+	function setUserAgent()
+	{
+		return 'OCA-PHP-API ' . self::VERSION . ' - github.com/juanchorossi/OCA-PHP-API';
+	}
 	
 	// =========================================================================
 	
@@ -20,6 +44,7 @@ class Oca
 		
 		curl_setopt_array($ch,	array(	CURLOPT_RETURNTRANSFER	=> TRUE,
 										CURLOPT_HEADER			=> FALSE,
+										CURLOPT_USERAGENT		=> $this->setUserAgent(),
 										CURLOPT_CONNECTTIMEOUT	=> 5,
 										CURLOPT_POST			=> TRUE,
 										CURLOPT_POSTFIELDS		=> 'CodigoPostal='.(int)$CP,
@@ -69,6 +94,7 @@ class Oca
 		curl_setopt_array($ch,	array(	CURLOPT_RETURNTRANSFER	=> TRUE,
 										CURLOPT_HEADER			=> FALSE,
 										CURLOPT_CONNECTTIMEOUT	=> 5,
+										CURLOPT_USERAGENT		=> $this->setUserAgent(),
 										CURLOPT_URL				=> "{$this->webservice_url}/oep_tracking/Oep_Track.asmx/GetCentrosImposicion",
 										CURLOPT_FOLLOWLOCATION	=> TRUE));
 
@@ -90,5 +116,64 @@ class Oca
 		}
 		
 		return $c_imp;
+	}
+	
+	// =========================================================================
+
+	/**
+	 * Tarifar un Envío Corporativo
+	 * 
+	 * http://webservice.oca.com.ar/oep_tracking/Oep_Track.asmx?op=Tarifar_Envio_Corporativo
+	 *
+	 * @param string $PesoTotal
+	 * @param string $VolumenTotal
+	 * @param string $CodigoPostalOrigen
+	 * @param string $CodigoPostalDestino
+	 * @param string $CantidadPaquetes
+	 * @param string $ValorDeclarado
+	 * @param string $Cuit
+	 * @param string $Operativa 
+	 *
+	 * Resultado: (XML) conteniendo el tipo de tarifador y el precio del envío.
+	 */
+	public function tarifarEnvioCorporativo($PesoTotal, $VolumenTotal, $CodigoPostalOrigen, $CodigoPostalDestino, $CantidadPaquetes, $ValorDeclarado, $Cuit, $Operativa)
+	{
+		$_query_string = array(	'PesoTotal'				=> $PesoTotal,
+								'VolumenTotal'			=> $VolumenTotal,
+								'CodigoPostalOrigen'	=> $CodigoPostalOrigen,
+								'CodigoPostalDestino'	=> $CodigoPostalDestino,
+								'CantidadPaquetes'		=> $CantidadPaquetes,
+								'ValorDeclarado'		=> $ValorDeclarado,
+								'Cuit'					=> $Cuit,
+								'Operativa'				=> $Operativa);
+
+		$ch = curl_init();
+		
+		curl_setopt_array($ch,	array(	CURLOPT_RETURNTRANSFER	=> TRUE,
+										CURLOPT_HEADER			=> FALSE,
+										CURLOPT_USERAGENT		=> $this->setUserAgent(),
+										CURLOPT_CONNECTTIMEOUT	=> 5,
+										CURLOPT_POST			=> TRUE,
+										CURLOPT_POSTFIELDS		=> http_build_query($_query_string),
+										CURLOPT_URL				=> "{$this->webservice_url}/epak_tracking/Oep_TrackEPak.asmx/Tarifar_Envio_Corporativo",
+										CURLOPT_FOLLOWLOCATION	=> TRUE));
+
+		$dom = new DOMDocument();
+		@$dom->loadXML(curl_exec($ch));
+		$xpath = new DOMXpath($dom);
+
+		$e_corp = array();
+		foreach (@$xpath->query("//NewDataSet/Table") as $envio_corporativo)
+		{
+			$e_corp[] = array(	'Tarifador'		=> $envio_corporativo->getElementsByTagName('Tarifador')->item(0)->nodeValue,
+								'Precio'		=> $envio_corporativo->getElementsByTagName('Precio')->item(0)->nodeValue,
+								'Ambito'		=> $envio_corporativo->getElementsByTagName('Ambito')->item(0)->nodeValue,
+								'PlazoEntrega'	=> $envio_corporativo->getElementsByTagName('PlazoEntrega')->item(0)->nodeValue,
+								'Adicional'		=> $envio_corporativo->getElementsByTagName('Adicional')->item(0)->nodeValue,
+								'Total'			=> $envio_corporativo->getElementsByTagName('Total')->item(0)->nodeValue,
+							);
+		}
+		
+		return $e_corp;
 	}
 }
