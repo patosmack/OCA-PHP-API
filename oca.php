@@ -122,8 +122,6 @@ class Oca
 
 	/**
 	 * Tarifar un Envío Corporativo
-	 * 
-	 * http://webservice.oca.com.ar/oep_tracking/Oep_Track.asmx?op=Tarifar_Envio_Corporativo
 	 *
 	 * @param string $PesoTotal
 	 * @param string $VolumenTotal
