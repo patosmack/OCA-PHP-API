@@ -1,5 +1,4 @@
 <?php
-
 class Oca
 {
 	const VERSION				= '0.1';
@@ -23,7 +22,7 @@ class Oca
 	 * 
 	 * @return string
 	 */
-	function setUserAgent()
+	public function setUserAgent()
 	{
 		return 'OCA-PHP-API ' . self::VERSION . ' - github.com/juanchorossi/OCA-PHP-API';
 	}
