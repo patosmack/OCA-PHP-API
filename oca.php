@@ -173,4 +173,60 @@ class Oca
 		
 		return $e_corp;
 	}
+
+	/**
+	 * Obtener lista de Provincias 
+	 * Resultado: array $e_prov
+	 */
+	public function getProvincias()
+	{
+		$ch = curl_init();
+		curl_setopt_array($ch,	array(	CURLOPT_RETURNTRANSFER	=> TRUE,
+						CURLOPT_HEADER		=> FALSE,
+						CURLOPT_CONNECTTIMEOUT	=> 5,
+						CURLOPT_USERAGENT	=> $this->setUserAgent(),
+						CURLOPT_URL		=> "{$this->webservice_url}/oep_tracking/Oep_Track.asmx/GetProvincias",
+						CURLOPT_FOLLOWLOCATION	=> TRUE));
+		$dom = new DOMDocument();
+		$dom->loadXml(curl_exec($ch));
+		$xpath = new DOMXPath($dom);
+		
+		$e_prov = array();
+		foreach (@$xpath->query("//Provincias/Provincia") as $provincia) {
+			$e_prov[] = array( 
+				'id' => $provincia->getElementsByTagName('IdProvincia')->item(0)->nodeValue,
+				'provincia' => $provincia->getElementsByTagName('Descripcion')->item(0)->nodeValue, 
+			);
+		}
+		
+		return $e_prov;
+	}
+
+	/**
+	 * Lista de localidades de una provincia
+	 * @param string $idProvincia
+	 */
+	public function getLocalidadesByProvincia($idProvincia)
+	{
+		$_query_string = array(	'idProvincia' => $idProvincia );
+		
+		$ch = curl_init();
+		curl_setopt_array($ch,	array(	CURLOPT_RETURNTRANSFER	=> TRUE,
+						CURLOPT_HEADER		=> FALSE,
+						CURLOPT_CONNECTTIMEOUT	=> 5,
+						CURLOPT_POSTFIELDS	=> http_build_query($_query_string),
+						CURLOPT_USERAGENT	=> $this->setUserAgent(),
+						CURLOPT_URL		=> "{$this->webservice_url}/oep_tracking/Oep_Track.asmx/GetLocalidadesByProvincia",
+						CURLOPT_FOLLOWLOCATION	=> TRUE));
+		$dom = new DOMDocument();
+		$dom->loadXml(curl_exec($ch));
+		$xpath = new DOMXPath($dom);
+		
+		$e_loc = array();
+		foreach (@$xpath->query("//Localidades/Provincia") as $provincia) {
+			$e_loc[] = array( 'localidad'=> $provincia->getElementsByTagName('Nombre')->item(0)->nodeValue );
+		}
+		return $e_loc;
+	}
+
 }
