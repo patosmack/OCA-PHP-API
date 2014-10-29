@@ -228,5 +228,4 @@ class Oca
 		}
 		return $e_loc;
 	}
-
 }
