@@ -5,7 +5,7 @@ class Oca
 	protected $cuit				= '';
 	protected $webservice_url	= 'webservice.oca.com.ar';
 	
-	// =========================================================================
+	// ========================================================================
 	
 	function __construct($params = array())
 	{
