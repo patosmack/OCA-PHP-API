@@ -182,11 +182,11 @@ class Oca
 	{
 		$ch = curl_init();
 		curl_setopt_array($ch,	array(	CURLOPT_RETURNTRANSFER	=> TRUE,
-						CURLOPT_HEADER		=> FALSE,
-						CURLOPT_CONNECTTIMEOUT	=> 5,
-						CURLOPT_USERAGENT	=> $this->setUserAgent(),
-						CURLOPT_URL		=> "{$this->webservice_url}/oep_tracking/Oep_Track.asmx/GetProvincias",
-						CURLOPT_FOLLOWLOCATION	=> TRUE));
+										CURLOPT_HEADER			=> FALSE,
+										CURLOPT_CONNECTTIMEOUT	=> 5,
+										CURLOPT_USERAGENT		=> $this->setUserAgent(),
+										CURLOPT_URL				=> "{$this->webservice_url}/oep_tracking/Oep_Track.asmx/GetProvincias",
+										CURLOPT_FOLLOWLOCATION	=> TRUE));
 		$dom = new DOMDocument();
 		$dom->loadXml(curl_exec($ch));
 		$xpath = new DOMXPath($dom);
@@ -212,12 +212,12 @@ class Oca
 		
 		$ch = curl_init();
 		curl_setopt_array($ch,	array(	CURLOPT_RETURNTRANSFER	=> TRUE,
-						CURLOPT_HEADER		=> FALSE,
-						CURLOPT_CONNECTTIMEOUT	=> 5,
-						CURLOPT_POSTFIELDS	=> http_build_query($_query_string),
-						CURLOPT_USERAGENT	=> $this->setUserAgent(),
-						CURLOPT_URL		=> "{$this->webservice_url}/oep_tracking/Oep_Track.asmx/GetLocalidadesByProvincia",
-						CURLOPT_FOLLOWLOCATION	=> TRUE));
+										CURLOPT_HEADER			=> FALSE,
+										CURLOPT_CONNECTTIMEOUT	=> 5,
+										CURLOPT_POSTFIELDS		=> http_build_query($_query_string),
+										CURLOPT_USERAGENT		=> $this->setUserAgent(),
+										CURLOPT_URL				=> "{$this->webservice_url}/oep_tracking/Oep_Track.asmx/GetLocalidadesByProvincia",
+										CURLOPT_FOLLOWLOCATION	=> TRUE));
 		$dom = new DOMDocument();
 		$dom->loadXml(curl_exec($ch));
 		$xpath = new DOMXPath($dom);
@@ -228,5 +228,4 @@ class Oca
 		}
 		return $e_loc;
 	}
-	
 }
