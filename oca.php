@@ -71,8 +71,7 @@ class Oca
 	 * @param string $CodigoPostalDestino
 	 * @param string $CantidadPaquetes
 	 * @param string $ValorDeclarado
-	 *
-	 * Resultado: (XML) conteniendo el tipo de tarifador y el precio del envío.
+	 * @return array $e_corp conteniendo el tipo de tarifador y el precio del envío.
 	 */
 	public function tarifarEnvioCorporativo($PesoTotal, $VolumenTotal, $CodigoPostalOrigen, $CodigoPostalDestino, $CantidadPaquetes, $ValorDeclarado)
 	{
@@ -116,12 +115,96 @@ class Oca
 	}
 
 	// =========================================================================
+
+	/**
+	 * Dado el CUIT del cliente con un rango de fechas se devuelve una lista con todos los Envíos realizados en dicho período
+	 * 
+	 * @param string $fechaDesde Fecha en formato DD-MM-YYYY (sin documentacion oficial)
+	 * @param string $fechaHasta Fecha en formato DD-MM-YYYY (sin documentacion oficial)
+	 * @return array $envios Contiene los valores NroProducto y NumeroEnvio
+	 */
+	public function listEnvios($fechaDesde, $fechaHasta)
+	{
+		$_query_string = array(	'FechaDesde'			=> $fechaDesde,
+								'FechaHasta'			=> $fechaHasta,
+								'Cuit'					=> $this->Cuit,
+							);
+
+		$ch = curl_init();
+		
+		curl_setopt_array($ch,	array(	CURLOPT_RETURNTRANSFER	=> TRUE,
+										CURLOPT_HEADER			=> FALSE,
+										CURLOPT_USERAGENT		=> $this->setUserAgent(),
+										CURLOPT_CONNECTTIMEOUT	=> 5,
+										CURLOPT_POST			=> TRUE,
+										CURLOPT_POSTFIELDS		=> http_build_query($_query_string),
+										CURLOPT_URL				=> "{$this->webservice_url}/epak_tracking/Oep_TrackEPak.asmx/List_Envios",
+										CURLOPT_FOLLOWLOCATION	=> TRUE));
+
+		$dom = new DOMDocument();
+		@$dom->loadXML(curl_exec($ch));
+		$xpath = new DOMXpath($dom);	
+		
+		$envios = array();
+		foreach (@$xpath->query("//NewDataSet/Table") as $envio_corporativo)
+		{
+			$envios[] = array(	'NroProducto'		=> $envio_corporativo->getElementsByTagName('NroProducto')->item(0)->nodeValue,
+								'NumeroEnvio'		=> $envio_corporativo->getElementsByTagName('NumeroEnvio')->item(0)->nodeValue,
+							);
+		}
+		
+		return $envios;
+				
+	}
+
+	// =========================================================================
+
+	/**
+	 * Dado un envío se devuelven todos los eventos. En desarrollo, por falta de 
+	 * documentación oficial se desconoce su comportamiento.
+	 * 
+	 * @param integer $pieza 
+	 * @param integer $nroDocumentoCliente
+	 * @return array $envios Contiene los valores NroProducto y NumeroEnvio
+	 */
+	public function trackingPieza($pieza = '', $nroDocumentoCliente = '')
+	{
+		$_query_string = array(	'Pieza'					=> $pieza,
+								'NroDocumentoCliente'	=> $nroDocumentoCliente,
+								'Cuit'					=> $this->Cuit,
+							);
+
+		$ch = curl_init();
+		
+		curl_setopt_array($ch,	array(	CURLOPT_RETURNTRANSFER	=> TRUE,
+										CURLOPT_HEADER			=> FALSE,
+										CURLOPT_USERAGENT		=> $this->setUserAgent(),
+										CURLOPT_CONNECTTIMEOUT	=> 5,
+										CURLOPT_POST			=> TRUE,
+										CURLOPT_POSTFIELDS		=> http_build_query($_query_string),
+										CURLOPT_URL				=> "{$this->webservice_url}/epak_tracking/Oep_TrackEPak.asmx/Tracking_Pieza",
+										CURLOPT_FOLLOWLOCATION	=> TRUE));
+		$dom = new DOMDocument();
+		@$dom->loadXML(curl_exec($ch));
+		$xpath = new DOMXpath($dom);	
+		
+		$envio = array();
+		foreach (@$xpath->query("//NewDataSet/Table") as $tp)
+		{
+			$envio[] = array();
+		}
+		
+		return $envio;
+				
+	}
+
+	// =========================================================================
 	
 	/**
 	 * Devuelve todos los Centros de Imposición existentes cercanos al CP
 	 * 
 	 * @param integer $CP Código Postal
-	 * @return type 
+	 * @return array $c_imp con informacion de los centros de imposicion 
 	 */
 	public function getCentrosImposicionPorCP($CP = NULL)
 	{
@@ -172,7 +255,7 @@ class Oca
 	/**
 	 * Devuelve todos los Centros de Imposición existentes
 	 * 
-	 * @return array $c_imp
+	 * @return array $c_imp con informacion de los centros de imposicion
 	 */
 	public function getCentrosImposicion()
 	{
@@ -208,8 +291,9 @@ class Oca
 	// =========================================================================
 
 	/**
-	 * Obtener lista de Provincias 
-	 * Resultado: array $e_prov
+	 * Obtiene listado de provincias 
+	 *
+	 * @return array $provincias
 	 */
 	public function getProvincias()
 	{
@@ -224,26 +308,28 @@ class Oca
 		$dom->loadXml(curl_exec($ch));
 		$xpath = new DOMXPath($dom);
 		
-		$e_prov = array();
-		foreach (@$xpath->query("//Provincias/Provincia") as $provincia) {
-			$e_prov[] = array( 
-				'id' => $provincia->getElementsByTagName('IdProvincia')->item(0)->nodeValue,
-				'provincia' => $provincia->getElementsByTagName('Descripcion')->item(0)->nodeValue, 
-			);
+		$provincias = array();
+		foreach (@$xpath->query("//Provincias/Provincia") as $provincia)
+		{
+			$provincias[] = array( 	'id' 		=> $provincia->getElementsByTagName('IdProvincia')->item(0)->nodeValue,
+									'provincia' => $provincia->getElementsByTagName('Descripcion')->item(0)->nodeValue, 
+								);
 		}
 		
-		return $e_prov;
+		return $provincias;
 	}
 
 	// =========================================================================
 
 	/**
-	 * Lista de localidades de una provincia
-	 * @param string $idProvincia
+	 * Lista las localidades de una provincia
+	 * 
+	 * @param integer $idProvincia
+	 * @return array $localidades
 	 */
 	public function getLocalidadesByProvincia($idProvincia)
 	{
-		$_query_string = array(	'idProvincia' => $idProvincia );
+		$_query_string = array('idProvincia' => $idProvincia);
 		
 		$ch = curl_init();
 		curl_setopt_array($ch,	array(	CURLOPT_RETURNTRANSFER	=> TRUE,
@@ -257,11 +343,13 @@ class Oca
 		$dom->loadXml(curl_exec($ch));
 		$xpath = new DOMXPath($dom);
 		
-		$e_loc = array();
-		foreach (@$xpath->query("//Localidades/Provincia") as $provincia) {
-			$e_loc[] = array( 'localidad'=> $provincia->getElementsByTagName('Nombre')->item(0)->nodeValue );
+		$localidades = array();
+		foreach (@$xpath->query("//Localidades/Provincia") as $provincia)
+		{
+			$localidades[] = array('localidad' => $provincia->getElementsByTagName('Nombre')->item(0)->nodeValue );
 		}
-		return $e_loc;
+
+		return $localidades;
 	}
 
 	// =========================================================================
