@@ -18,7 +18,9 @@ Como dependencia en tu proyecto a través de composer.json
 ### Uso
 
 ```php
-### Unicamente para tarifar un envío requiere un número de operativa y CUIT válidos y autorizado por OCA para operar (at. al cliente 0800-999-7700). Otros métodos no requieren esta autorización
+### Unicamente para tarifar un envío requiere un número de operativa y CUIT válidos,
+### autorizados por OCA para operar (at. al cliente 0800-999-7700). 
+### Otros métodos no requieren esta autorización
 
 $oca 	= new Oca($cuit = '20-12345678-7', $operativa = 12345);
 $price 	= $oca->tarifarEnvioCorporativo(1, 1, 1640, 1006, 1, 0);
