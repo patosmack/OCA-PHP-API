@@ -26,8 +26,8 @@ print_r ($price);
 ```
 
 Para más información y más documentación:
-[http://webservice.oca.com.ar/oep_tracking](Web Service)
-[https://www4.oca.com.ar/ocaepak/help/mododeuso.asp](Modo de Uso)
+1) [http://webservice.oca.com.ar/oep_tracking](Web Service)
+2) [https://www4.oca.com.ar/ocaepak/help/mododeuso.asp](Modo de Uso)
 
 * Los siguientes métodos están disponibles en el web service original de OCA. 
 
@@ -50,4 +50,4 @@ Para más información y más documentación:
 	* **Tracking_OrdenRetiro**
 		- Dado un nro. de Orden de Retiro, devuelve todas sus guías
 	* **Tracking_Pieza**
-		- Dado un envío se devuelven todos los eventos
+		- Dado un envío se devuelven todos los eventos  
