@@ -39,7 +39,11 @@ class Oca
 {
 	const VERSION				= '0.1.1';
 	protected $webservice_url	= 'webservice.oca.com.ar';
-	
+
+	const FRANJA_HORARIA_8_17HS = 1;
+	const FRANJA_HORARIA_8_12HS = 2;
+	const FRANJA_HORARIA_14_17HS = 3;
+
 	// ========================================================================
 	
 	public function __construct($Cuit = '', $Operativa = '')
@@ -365,6 +369,57 @@ class Oca
 	 *                                  Si se envía True, la confirmación será instantánea.
 	 * @return array $resumen
 	 */
+	public function ingresoOR($usuarioEPack, $passwordEPack, $xmlRetiro, $confirmarRetiro = false, $diasRetiro = 1, $franjaHoraria = Oca::FRANJA_HORARIA_8_17HS)
+	{
+		$_query_string = array(
+			'usr' => $usuarioEPack,
+			'psw' => $passwordEPack,
+			'XML_Retiro' => $xmlRetiro,
+			'ConfirmarRetiro' => $confirmarRetiro ? 'true' : 'false',
+			'DiasRetiro' => $diasRetiro,
+			'FranjaHoraria' => $franjaHoraria
+			);
+
+		$ch = curl_init();
+		curl_setopt_array($ch,	array(	CURLOPT_RETURNTRANSFER	=> TRUE,
+										CURLOPT_HEADER			=> FALSE,
+										CURLOPT_CONNECTTIMEOUT	=> 5,
+										CURLOPT_POSTFIELDS		=> http_build_query($_query_string),
+										CURLOPT_USERAGENT		=> $this->setUserAgent(),
+										CURLOPT_URL				=> "{$this->webservice_url}/oep_tracking/Oep_Track.asmx/IngresoOR",
+										CURLOPT_FOLLOWLOCATION	=> TRUE));
+
+		$dom = new DOMDocument();
+		@$dom->loadXml(curl_exec($ch));
+		$xpath = new DOMXPath($dom);
+
+		$resultado = @$xpath->query("//Resultado/Resumen ")->item(0);
+
+		$resumen = array(
+				'CodigoOperacion' => $resultado->getElementsByTagName('CodigoOperacion')->item(0)->nodeValue,
+				'FechaIngreso' => $resultado->getElementsByTagName('FechaIngreso')->item(0)->nodeValue,
+				'MailUsuario' => $resultado->getElementsByTagName('mailUsuario')->item(0)->nodeValue,
+				'CantidadRegistros' => $resultado->getElementsByTagName('CantidadRegistros')->item(0)->nodeValue,
+				'CantidadIngresados' => $resultado->getElementsByTagName('CantidadIngresados')->item(0)->nodeValue,
+				'CantidadRechazados' => $resultado->getElementsByTagName('CantidadRechazados')->item(0)->nodeValue
+				 );
+
+		return $resumen;
+	}
+
+	// =========================================================================
+
+	/**
+	 * Ingresa un envio al carrito de envios
+	 *
+	 * @param string $usuarioEPack: Usuario de ePak
+	 * @param string $passwordEPack: Password de acceso a ePak
+	 * @param string $xmlDatos: XML con los datos de Retiro, Entrega y características de los paquetes.
+	 * @param boolean $confirmarRetiro: Si se envía False, el envío quedará alojado en el
+	 *                                  Carrito de Envíos de ePak a la espera de la confirmación del mismo.
+	 *                                  Si se envía True, la confirmación será instantánea.
+	 * @return array $resumen
+	 */
 	public function ingresoORMultiplesRetiros($usuarioEPack, $passwordEPack, $xmlDatos, $confirmarRetiro = false)
 	{
 		$_query_string = array(
@@ -454,4 +509,167 @@ class Oca
 
 		return $centros;
 	}
+
+	// =========================================================================
+
+	/**
+	 * Anula una orden generada
+	 *
+	 * @param string $user
+	 * @param string $pass
+	 * @param string $IdOrdenRetiro: Nro. de Orden de Retiro/Admisión
+	 *
+	 * @return array $centros
+	 */
+	public function anularOrdenGenerada($user, $pass, $IdOrdenRetiro)
+	{
+		$_query_string = array(
+			'Usr' => $user,
+			'Psw' => $pass,
+			'IdOrdenRetiro' => $IdOrdenRetiro
+			);
+
+		$ch = curl_init();
+		curl_setopt_array($ch,	array(	CURLOPT_RETURNTRANSFER	=> TRUE,
+										CURLOPT_HEADER			=> FALSE,
+										CURLOPT_CONNECTTIMEOUT	=> 5,
+										CURLOPT_POSTFIELDS		=> http_build_query($_query_string),
+										CURLOPT_USERAGENT		=> $this->setUserAgent(),
+										CURLOPT_URL				=> "{$this->webservice_url}/epak_tracking/Oep_TrackEPak.asmx/AnularOrdenGenerada",
+										CURLOPT_FOLLOWLOCATION	=> TRUE));
+
+		print_r(curl_exec($ch));
+		die();
+
+		$dom = new DOMDocument();
+		@$dom->loadXml(curl_exec($ch));
+		$xpath = new DOMXPath($dom);
+
+		$centros = array();
+		foreach (@$xpath->query("//NewDataSet/Table") as $centro)
+		{
+			$centros[] = array(
+				'NroCentroCosto' => $centro->getElementsByTagName('NroCentroCosto')->item(0)->nodeValue,
+				'Solicitante' => $centro->getElementsByTagName('Solicitante')->item(0)->nodeValue,
+				'CalleRetiro' => $centro->getElementsByTagName('CalleRetiro')->item(0)->nodeValue,
+				'NumeroRetiro' => $centro->getElementsByTagName('NumeroRetiro')->item(0)->nodeValue,
+				'PisoRetiro' => $centro->getElementsByTagName('PisoRetiro')->item(0)->nodeValue,
+				'DeptoRetiro' => $centro->getElementsByTagName('DeptoRetiro')->item(0)->nodeValue,
+				'LocalidadRetiro' => $centro->getElementsByTagName('LocalidadRetiro')->item(0)->nodeValue,
+				'CodigoPostal' => $centro->getElementsByTagName('codigopostal')->item(0)->nodeValue,
+				'TelContactoRetiro' => $centro->getElementsByTagName('TelContactoRetiro')->item(0)->nodeValue,
+				'EmaiContactolRetiro' => $centro->getElementsByTagName('EmaiContactolRetiro')->item(0)->nodeValue,
+				'ContactoRetiro' => $centro->getElementsByTagName('ContactoRetiro')->item(0)->nodeValue
+				);
+		}
+
+		return $centros;
+	}
+
+	// =========================================================================
+
+	/**
+	 * Lista los envios
+	 *
+	 * @param string $cuit: CUIT del cliente [con guiones]
+	 * @param string $fechaDesde: DD-MM-AAAA
+	 * @param string $fechaHasta: DD-MM-AAAA
+	 *
+	 * @return array $envios
+	 */
+	public function list_Envios($cuit, $fechaDesde = '01-01-2015', $fechaHasta = '01-01-2050')
+	{
+		$_query_string = array(
+			'cuit' => $cuit,
+			'FechaDesde' => $fechaDesde,
+			'FechaHasta' => $fechaHasta
+			);
+
+		$ch = curl_init();
+		curl_setopt_array($ch,	array(	CURLOPT_RETURNTRANSFER	=> TRUE,
+										CURLOPT_HEADER			=> FALSE,
+										CURLOPT_CONNECTTIMEOUT	=> 5,
+										CURLOPT_POSTFIELDS		=> http_build_query($_query_string),
+										CURLOPT_USERAGENT		=> $this->setUserAgent(),
+										CURLOPT_URL				=> "{$this->webservice_url}/epak_tracking/Oep_TrackEPak.asmx/List_Envios",
+										CURLOPT_FOLLOWLOCATION	=> TRUE));
+
+		$dom = new DOMDocument();
+		@$dom->loadXml(curl_exec($ch));
+		$xpath = new DOMXPath($dom);
+
+		$envios = array();
+		foreach (@$xpath->query("//NewDataSet/Table") as $envio)
+		{
+			$envios[] = array(
+				'NroProducto' => $envio->getElementsByTagName('NroProducto')->item(0)->nodeValue,
+				'NumeroEnvio' => $envio->getElementsByTagName('NumeroEnvio')->item(0)->nodeValue
+				);
+		}
+
+		return $envios;
+	}
+
+
+	// =========================================================================
+
+	/**
+	 * Obtiene las etiquetas en formato HTML.
+	 *
+	 * @param string $IdOrdenRetiro
+	 * @param string $NroEnvio
+	 *
+	 * @return string $html
+	 */
+	public function getHtmlDeEtiquetasPorOrdenOrNumeroEnvio($IdOrdenRetiro, $NroEnvio = '')
+	{
+		$_query_string = array(
+			'IdOrdenRetiro' => $IdOrdenRetiro,
+			'NroEnvio' => $NroEnvio
+			);
+
+		$ch = curl_init();
+		curl_setopt_array($ch,	array(	CURLOPT_RETURNTRANSFER	=> TRUE,
+										CURLOPT_HEADER			=> FALSE,
+										CURLOPT_CONNECTTIMEOUT	=> 5,
+										CURLOPT_POSTFIELDS		=> http_build_query($_query_string),
+										CURLOPT_USERAGENT		=> $this->setUserAgent(),
+										CURLOPT_URL				=> "{$this->webservice_url}/oep_tracking/Oep_Track.asmx/GetHtmlDeEtiquetasPorOrdenOrNumeroEnvio",
+										CURLOPT_FOLLOWLOCATION	=> TRUE));
+
+		return curl_exec($ch);
+	}
+
+	// =========================================================================
+
+	/**
+	 * Obtiene las etiquetas en formato PDF.
+	 *
+	 * @param string $IdOrdenRetiro
+	 * @param string $NroEnvio
+	 * @param boolean $LogisticaInversa
+	 *
+	 * @return string $pdf
+	 */
+	public function getPDFDeEtiquetasPorOrdenOrNumeroEnvio($IdOrdenRetiro, $NroEnvio = '', $LogisticaInversa = false)
+	{
+		$_query_string = array(
+			'IdOrdenRetiro' => $IdOrdenRetiro,
+			'NroEnvio' => $NroEnvio,
+			'LogisticaInversa' => $LogisticaInversa ? 'true' : 'false'
+			);
+
+		$ch = curl_init();
+		curl_setopt_array($ch,	array(	CURLOPT_RETURNTRANSFER	=> TRUE,
+										CURLOPT_HEADER			=> FALSE,
+										CURLOPT_CONNECTTIMEOUT	=> 5,
+										CURLOPT_POSTFIELDS		=> http_build_query($_query_string),
+										CURLOPT_USERAGENT		=> $this->setUserAgent(),
+										CURLOPT_URL				=> "{$this->webservice_url}/oep_tracking/Oep_Track.asmx/GetPDFDeEtiquetasPorOrdenOrNumeroEnvio",
+										CURLOPT_FOLLOWLOCATION	=> TRUE));
+
+		return base64_decode(curl_exec($ch));
+	}
+
+
 }
