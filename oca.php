@@ -389,22 +389,42 @@ class Oca
 										CURLOPT_URL				=> "{$this->webservice_url}/oep_tracking/Oep_Track.asmx/IngresoOR",
 										CURLOPT_FOLLOWLOCATION	=> TRUE));
 
+		$xml = curl_exec($ch);
+		file_put_contents('ingresoOr.xml', $xml);
+
 		$dom = new DOMDocument();
-		@$dom->loadXml(curl_exec($ch));
+		@$dom->loadXml($xml);
 		$xpath = new DOMXPath($dom);
 
-		$resultado = @$xpath->query("//Resultado/Resumen ")->item(0);
+		$xml_detalle_ingresos = @$xpath->query("//Resultado/DetalleIngresos ");
+		$xml_resumen = @$xpath->query("//Resultado/Resumen ")->item(0);
+
+		$detalle_ingresos = array();
+
+		foreach($xml_detalle_ingresos as $item)
+		{
+			$detalle_ingresos[] = array(
+				'Operativa' => $item->getElementsByTagName('Operativa')->item(0)->nodeValue,
+				'OrdenRetiro' => $item->getElementsByTagName('OrdenRetiro')->item(0)->nodeValue,
+				'NumeroEnvio' => $item->getElementsByTagName('NumeroEnvio')->item(0)->nodeValue,
+				'Remito' => $item->getElementsByTagName('Remito')->item(0)->nodeValue,
+				'Estado' => $item->getElementsByTagName('Estado')->item(0)->nodeValue,
+				'sucursalDestino' => $item->getElementsByTagName('sucursalDestino')->item(0)->nodeValue
+				 );
+		}
 
 		$resumen = array(
-				'CodigoOperacion' => $resultado->getElementsByTagName('CodigoOperacion')->item(0)->nodeValue,
-				'FechaIngreso' => $resultado->getElementsByTagName('FechaIngreso')->item(0)->nodeValue,
-				'MailUsuario' => $resultado->getElementsByTagName('mailUsuario')->item(0)->nodeValue,
-				'CantidadRegistros' => $resultado->getElementsByTagName('CantidadRegistros')->item(0)->nodeValue,
-				'CantidadIngresados' => $resultado->getElementsByTagName('CantidadIngresados')->item(0)->nodeValue,
-				'CantidadRechazados' => $resultado->getElementsByTagName('CantidadRechazados')->item(0)->nodeValue
+				'CodigoOperacion' => $xml_resumen->getElementsByTagName('CodigoOperacion')->item(0)->nodeValue,
+				'FechaIngreso' => $xml_resumen->getElementsByTagName('FechaIngreso')->item(0)->nodeValue,
+				'MailUsuario' => $xml_resumen->getElementsByTagName('mailUsuario')->item(0)->nodeValue,
+				'CantidadRegistros' => $xml_resumen->getElementsByTagName('CantidadRegistros')->item(0)->nodeValue,
+				'CantidadIngresados' => $xml_resumen->getElementsByTagName('CantidadIngresados')->item(0)->nodeValue,
+				'CantidadRechazados' => $xml_resumen->getElementsByTagName('CantidadRechazados')->item(0)->nodeValue
 				 );
 
-		return $resumen;
+		$resultado = array('detalleIngresos' => $detalle_ingresos, 'resumen' => $resumen);
+
+		return $resultado;
 	}
 
 	// =========================================================================
@@ -440,21 +460,43 @@ class Oca
 										CURLOPT_URL				=> "{$this->webservice_url}/epak_tracking/Oep_TrackEPak.asmx/IngresoORMultiplesRetiros",
 										CURLOPT_FOLLOWLOCATION	=> TRUE));
 
+		$xml = curl_exec($ch);
+		file_put_contents('ingresoORMultiplesRetiros.xml', $xml);
+
 		$dom = new DOMDocument();
-		@$dom->loadXml(curl_exec($ch));
+		@$dom->loadXml($xml);
 		$xpath = new DOMXPath($dom);
 
-		$resultado = @$xpath->query("//Resultado/Resumen ")->item(0);
+		$xml_detalle_ingresos = @$xpath->query("//Resultado/DetalleIngresos ");
+		$xml_resumen = @$xpath->query("//Resultado/Resumen ")->item(0);
+
+		$detalle_ingresos = array();
+
+		foreach($xml_detalle_ingresos as $item)
+		{
+			$detalle_ingresos[] = array(
+				'Operativa' => $item->getElementsByTagName('Operativa')->item(0)->nodeValue,
+				'OrdenRetiro' => $item->getElementsByTagName('OrdenRetiro')->item(0)->nodeValue,
+				'NumeroEnvio' => $item->getElementsByTagName('NumeroEnvio')->item(0)->nodeValue,
+				'Remito' => $item->getElementsByTagName('Remito')->item(0)->nodeValue,
+				'Estado' => $item->getElementsByTagName('Estado')->item(0)->nodeValue,
+				'sucursalDestino' => $item->getElementsByTagName('sucursalDestino')->item(0)->nodeValue
+				 );
+		}
+
+
 		$resumen = array(
-				'CodigoOperacion' => $resultado->getElementsByTagName('CodigoOperacion')->item(0)->nodeValue,
-				'FechaIngreso' => $resultado->getElementsByTagName('FechaIngreso')->item(0)->nodeValue,
-				'MailUsuario' => $resultado->getElementsByTagName('mailUsuario')->item(0)->nodeValue,
-				'CantidadRegistros' => $resultado->getElementsByTagName('CantidadRegistros')->item(0)->nodeValue,
-				'CantidadIngresados' => $resultado->getElementsByTagName('CantidadIngresados')->item(0)->nodeValue,
-				'CantidadRechazados' => $resultado->getElementsByTagName('CantidadRechazados')->item(0)->nodeValue
+				'CodigoOperacion' => $xml_resumen->getElementsByTagName('CodigoOperacion')->item(0)->nodeValue,
+				'FechaIngreso' => $xml_resumen->getElementsByTagName('FechaIngreso')->item(0)->nodeValue,
+				'MailUsuario' => $xml_resumen->getElementsByTagName('mailUsuario')->item(0)->nodeValue,
+				'CantidadRegistros' => $xml_resumen->getElementsByTagName('CantidadRegistros')->item(0)->nodeValue,
+				'CantidadIngresados' => $xml_resumen->getElementsByTagName('CantidadIngresados')->item(0)->nodeValue,
+				'CantidadRechazados' => $xml_resumen->getElementsByTagName('CantidadRechazados')->item(0)->nodeValue
 				 );
 
-		return $resumen;
+		$resultado = array('detalleIngresos' => $detalle_ingresos, 'resumen' => $resumen);
+
+		return $resultado;
 	}
 
 	// =========================================================================
@@ -538,28 +580,19 @@ class Oca
 										CURLOPT_URL				=> "{$this->webservice_url}/epak_tracking/Oep_TrackEPak.asmx/AnularOrdenGenerada",
 										CURLOPT_FOLLOWLOCATION	=> TRUE));
 
-		print_r(curl_exec($ch));
-		die();
+		$xml = curl_exec($ch);
+		file_put_contents('anularOrdenGenerada.xml', $xml);
 
 		$dom = new DOMDocument();
-		@$dom->loadXml(curl_exec($ch));
+		@$dom->loadXml($xml);
 		$xpath = new DOMXPath($dom);
 
 		$centros = array();
 		foreach (@$xpath->query("//NewDataSet/Table") as $centro)
 		{
 			$centros[] = array(
-				'NroCentroCosto' => $centro->getElementsByTagName('NroCentroCosto')->item(0)->nodeValue,
-				'Solicitante' => $centro->getElementsByTagName('Solicitante')->item(0)->nodeValue,
-				'CalleRetiro' => $centro->getElementsByTagName('CalleRetiro')->item(0)->nodeValue,
-				'NumeroRetiro' => $centro->getElementsByTagName('NumeroRetiro')->item(0)->nodeValue,
-				'PisoRetiro' => $centro->getElementsByTagName('PisoRetiro')->item(0)->nodeValue,
-				'DeptoRetiro' => $centro->getElementsByTagName('DeptoRetiro')->item(0)->nodeValue,
-				'LocalidadRetiro' => $centro->getElementsByTagName('LocalidadRetiro')->item(0)->nodeValue,
-				'CodigoPostal' => $centro->getElementsByTagName('codigopostal')->item(0)->nodeValue,
-				'TelContactoRetiro' => $centro->getElementsByTagName('TelContactoRetiro')->item(0)->nodeValue,
-				'EmaiContactolRetiro' => $centro->getElementsByTagName('EmaiContactolRetiro')->item(0)->nodeValue,
-				'ContactoRetiro' => $centro->getElementsByTagName('ContactoRetiro')->item(0)->nodeValue
+				'IdResult' => $centro->getElementsByTagName('IdResult')->item(0)->nodeValue,
+				'Mensaje' => $centro->getElementsByTagName('Mensaje')->item(0)->nodeValue
 				);
 		}
 
