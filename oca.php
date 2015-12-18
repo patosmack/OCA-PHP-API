@@ -44,14 +44,37 @@ class Oca
 	const FRANJA_HORARIA_8_12HS = 2;
 	const FRANJA_HORARIA_14_17HS = 3;
 
+	private $Cuit;
+	private $Operativa;
+
 	// ========================================================================
-	
-	public function __construct($Cuit = '', $Operativa = '')
+
+	public function __construct($cuit = '', $operativa = '')
 	{
-		$this->Cuit 		= trim($Cuit);
-		$this->Operativa 	= trim($Operativa);
+		$this->Cuit 		= trim($cuit);
+		$this->Operativa 	= trim($operativa);
 	}
-	
+
+	public function getOperativa()
+	{
+		return $this->Operativa;
+	}
+
+	public function setOperativa($operativa)
+	{
+		$this->Operativa = $operativa;
+	}
+
+	public function getCuit($cuit)
+	{
+		return $this->Cuit;
+	}
+
+	public function setCuit($cuit)
+	{
+		$this->Cuit = $cuit;
+	}
+
 	// =========================================================================
 	
 	/**
