@@ -211,6 +211,12 @@ class Oca
 										CURLOPT_POSTFIELDS		=> http_build_query($_query_string),
 										CURLOPT_URL				=> "{$this->webservice_url}/epak_tracking/Oep_TrackEPak.asmx/Tracking_Pieza",
 										CURLOPT_FOLLOWLOCATION	=> TRUE));
+
+
+		$oper = curl_exec($ch);
+
+//		print_r($oper);
+
 		$dom = new DOMDocument();
 		@$dom->loadXML(curl_exec($ch));
 		$xpath = new DOMXpath($dom);	
@@ -218,7 +224,14 @@ class Oca
 		$envio = array();
 		foreach (@$xpath->query("//NewDataSet/Table") as $tp)
 		{
-			$envio[] = array();
+			$envio[] = array(
+                        'NumeroEnvio'	=> $tp->getElementsByTagName('NumeroEnvio')->item(0)->nodeValue,
+                        'Descripcion_Motivo'	=> $tp->getElementsByTagName('Descripcion_Motivo')->item(0)->nodeValue,
+                        'Desdcripcion_Estado'	=> $tp->getElementsByTagName('Desdcripcion_Estado')->item(0)->nodeValue,
+                        'SUC'	=> $tp->getElementsByTagName('SUC')->item(0)->nodeValue,
+                        'fecha'	=> $tp->getElementsByTagName('fecha')->item(0)->nodeValue
+
+			);
 		}
 		
 		return $envio;
@@ -413,6 +426,11 @@ class Oca
 										CURLOPT_FOLLOWLOCATION	=> TRUE));
 
 		$xml = curl_exec($ch);
+
+
+		print_r($xml);
+		exit();
+
 		file_put_contents('ingresoOr.xml', $xml);
 
 		$dom = new DOMDocument();
@@ -484,11 +502,14 @@ class Oca
 										CURLOPT_FOLLOWLOCATION	=> TRUE));
 
 		$xml = curl_exec($ch);
-		file_put_contents('ingresoORMultiplesRetiros.xml', $xml);
+
+		//file_put_contents('ingresoORMultiplesRetiros.xml', $xml);
 
 		$dom = new DOMDocument();
 		@$dom->loadXml($xml);
 		$xpath = new DOMXPath($dom);
+
+		//unlink('ingresoORMultiplesRetiros.xml');
 
 		$xml_detalle_ingresos = @$xpath->query("//Resultado/DetalleIngresos ");
 		$xml_resumen = @$xpath->query("//Resultado/Resumen ")->item(0);
